@@ -109,8 +109,6 @@ header h1 {
     align-items: center;
     padding: 30px;
     min-height: 320px;
-    background: radial-gradient(circle, rgba(0, 0, 0, 0.05) 0%, transparent 70%);
-    border-radius: 50%;
 }
 
 .progress-ring {
@@ -132,10 +130,10 @@ header h1 {
 
 .ring-circle-bg {
     fill: none;
-    stroke: #2d3748;
+    stroke: #e2e8f0;
     stroke-width: 24;
     stroke-linecap: round;
-    opacity: 0.15;
+    opacity: 0.05;
 }
 
 .ring-circle {
@@ -216,22 +214,22 @@ header h1 {
     z-index: -1;
 }
 
-/* Ring completion styles */
+/* Ring completion styles - Keep completed rings visible */
 .ring-completed {
-    opacity: 0.6;
-    stroke-width: 12;
+    opacity: 0.8;
+    stroke-width: 20;
 }
 
 .ring-completed.ring-focus {
-    stroke: #48bb78;
+    stroke: #00d4aa;
 }
 
 .ring-completed.ring-short-break {
-    stroke: #ed8936;
+    stroke: #ff9500;
 }
 
 .ring-completed.ring-long-break {
-    stroke: #9f7aea;
+    stroke: #007aff;
 }
 
 /* Controls */

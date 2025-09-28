@@ -162,14 +162,15 @@ class PomodoroTimer {
         if (!this.isRunning) {
             const sessionType = this.getSessionType();
             
-            // Check if the most recent ring is of the same type and not completed
+            // Check if there's an existing ring of the same type that's not completed
             let shouldResume = false;
-            if (this.rings.length > 0) {
-                const mostRecentRing = this.rings[this.rings.length - 1];
-                if (mostRecentRing.sessionType === sessionType && !mostRecentRing.completed) {
+            for (let i = 0; i < this.rings.length; i++) {
+                const ring = this.rings[i];
+                if (ring.sessionType === sessionType && !ring.completed) {
                     shouldResume = true;
-                    this.currentRingIndex = this.rings.length - 1;
-                    this.currentTime = mostRecentRing.currentTime;
+                    this.currentRingIndex = i;
+                    this.currentTime = ring.currentTime;
+                    break;
                 }
             }
             

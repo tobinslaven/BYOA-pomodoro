@@ -83,9 +83,17 @@ class PomodoroTimer {
         // Restore visual progress for all rings
         for (let i = 0; i < this.rings.length; i++) {
             const ring = this.rings[i];
-            const progress = ring.currentTime / ring.totalTime;
-            const offset = ring.circumference - (progress * ring.circumference);
-            ring.element.style.strokeDashoffset = offset;
+            if (ring.completed) {
+                // Completed rings should show as fully complete
+                ring.element.style.strokeDashoffset = '0';
+                ring.element.classList.add('ring-completed');
+            } else {
+                // Restore progress for incomplete rings
+                const progress = ring.currentTime / ring.totalTime;
+                const offset = ring.circumference - (progress * ring.circumference);
+                ring.element.style.strokeDashoffset = offset;
+                ring.element.classList.remove('ring-completed');
+            }
         }
     }
     
@@ -289,9 +297,10 @@ class PomodoroTimer {
         
         this.isWorkMode = !this.isWorkMode;
         
-        // Stop current timer but don't reset
+        // Stop current timer and reset currentTime for new mode
         this.isRunning = false;
         this.isPaused = false;
+        this.currentTime = 0; // Reset timer for new mode
         this.toggleBtn.textContent = 'Start';
         this.toggleBtn.classList.remove('btn-secondary');
         this.toggleBtn.classList.add('btn-primary');
@@ -331,6 +340,9 @@ class PomodoroTimer {
             currentRing.completed = true;
             currentRing.element.classList.add('ring-completed');
             currentRing.element.classList.remove('running');
+            
+            // Set the ring to show as fully complete (strokeDashoffset = 0)
+            currentRing.element.style.strokeDashoffset = '0';
         }
         
         // Play notification sound
@@ -349,11 +361,16 @@ class PomodoroTimer {
         this.currentRingIndex = -1;
         this.updateDisplay();
         this.updateProgress();
+        
+        // Auto-start new session after 5 seconds
+        setTimeout(() => {
+            this.startTimer();
+        }, 5000);
     }
     
     updateDisplay() {
-        if (this.currentRingIndex >= 0) {
-            // Show remaining time for current ring
+        if (this.currentRingIndex >= 0 && this.isRunning) {
+            // Show remaining time for current active ring
             const currentRing = this.rings[this.currentRingIndex];
             const remainingTime = currentRing.totalTime - this.currentTime;
             const minutes = Math.floor(remainingTime / 60);
@@ -361,7 +378,7 @@ class PomodoroTimer {
             
             this.timeDisplay.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
         } else {
-            // Show full time for new session
+            // Show full time for current mode (work or break)
             const minutes = Math.floor(this.totalTime / 60);
             const seconds = this.totalTime % 60;
             
@@ -370,7 +387,7 @@ class PomodoroTimer {
         
         this.sessionCountDisplay.textContent = this.sessionCount;
         
-        // Update page title with timer
+        // Update page title with timer - use current mode time, not ring time
         const minutes = Math.floor((this.totalTime - this.currentTime) / 60);
         const seconds = (this.totalTime - this.currentTime) % 60;
         this.updatePageTitle(minutes, seconds);

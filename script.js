@@ -96,7 +96,7 @@ class PomodoroTimer {
         bgCircle.setAttribute('class', 'ring-circle-bg');
         bgCircle.setAttribute('cx', ringSize / 2);
         bgCircle.setAttribute('cy', ringSize / 2);
-        bgCircle.setAttribute('r', (ringSize / 2) - 20);
+        bgCircle.setAttribute('r', (ringSize / 2) - 30);
         
         // Create progress circle
         const progressCircle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
@@ -104,10 +104,10 @@ class PomodoroTimer {
         progressCircle.setAttribute('id', ringId);
         progressCircle.setAttribute('cx', ringSize / 2);
         progressCircle.setAttribute('cy', ringSize / 2);
-        progressCircle.setAttribute('r', (ringSize / 2) - 20);
+        progressCircle.setAttribute('r', (ringSize / 2) - 30);
         
         // Set up stroke dash array
-        const radius = (ringSize / 2) - 20;
+        const radius = (ringSize / 2) - 30;
         const circumference = radius * 2 * Math.PI;
         progressCircle.style.strokeDasharray = `${circumference} ${circumference}`;
         progressCircle.style.strokeDashoffset = circumference;
@@ -137,7 +137,7 @@ class PomodoroTimer {
     }
     
     getRingSize(ringIndex) {
-        const sizes = [280, 240, 200, 160, 120];
+        const sizes = [300, 250, 200, 150, 100];
         return sizes[Math.min(ringIndex, sizes.length - 1)];
     }
     

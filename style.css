@@ -99,91 +99,135 @@ header h1 {
     margin: 0;
 }
 
-/* Progress Ring - Apple Watch Style */
+/* Multi-Ring Progress System - Apple Watch Style */
 
-.progress-ring-svg {
-    transform: rotate(-90deg);
-    filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.1));
-}
-
-.progress-ring-circle-bg {
-    fill: none;
-    stroke: #f1f5f9;
-    stroke-width: 20;
-    stroke-linecap: round;
-    opacity: 0.3;
-}
-
-.progress-ring-circle {
-    fill: none;
-    stroke: #667eea;
-    stroke-width: 20;
-    stroke-linecap: round;
-    transition: all 0.3s ease;
-    filter: drop-shadow(0 2px 4px rgba(102, 126, 234, 0.3));
-}
-
-/* Enhanced ring styles for different states */
-.timer-running .progress-ring-circle {
-    stroke: #48bb78;
-    filter: drop-shadow(0 2px 4px rgba(72, 187, 120, 0.4));
-    animation: ringPulse 2s ease-in-out infinite;
-}
-
-.timer-break .progress-ring-circle {
-    stroke: #ed8936;
-    filter: drop-shadow(0 2px 4px rgba(237, 137, 54, 0.4));
-}
-
-.timer-long-break .progress-ring-circle {
-    stroke: #9f7aea;
-    filter: drop-shadow(0 2px 4px rgba(159, 122, 234, 0.4));
-}
-
-/* Ring pulse animation */
-@keyframes ringPulse {
-    0%, 100% {
-        stroke-width: 20;
-        opacity: 1;
-    }
-    50% {
-        stroke-width: 24;
-        opacity: 0.8;
-    }
-}
-
-/* Ring glow effect */
-.progress-ring::before {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 240px;
-    height: 240px;
-    border-radius: 50%;
-    background: radial-gradient(circle, rgba(102, 126, 234, 0.1) 0%, transparent 70%);
-    pointer-events: none;
-    z-index: -1;
-}
-
-/* Enhanced ring container with better spacing */
-.progress-ring {
+.progress-rings-container {
     position: relative;
-    z-index: 1;
     margin: 1.5rem 0;
     display: flex;
     justify-content: center;
     align-items: center;
     padding: 20px;
+    min-height: 280px;
 }
 
-/* Make the SVG larger for better visibility */
-.progress-ring-svg {
+.progress-ring {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.ring-svg {
     transform: rotate(-90deg);
-    filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.15));
-    width: 220px;
-    height: 220px;
+    filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.1));
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) rotate(-90deg);
+}
+
+.ring-circle-bg {
+    fill: none;
+    stroke: #f1f5f9;
+    stroke-width: 16;
+    stroke-linecap: round;
+    opacity: 0.2;
+}
+
+.ring-circle {
+    fill: none;
+    stroke-width: 16;
+    stroke-linecap: round;
+    transition: all 0.3s ease;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+}
+
+/* Ring sizes for concentric circles */
+.ring-1 { width: 280px; height: 280px; }
+.ring-2 { width: 240px; height: 240px; }
+.ring-3 { width: 200px; height: 200px; }
+.ring-4 { width: 160px; height: 160px; }
+.ring-5 { width: 120px; height: 120px; }
+
+/* Ring colors for different session types */
+.ring-focus {
+    stroke: #667eea;
+    filter: drop-shadow(0 2px 4px rgba(102, 126, 234, 0.4));
+}
+
+.ring-focus.running {
+    stroke: #48bb78;
+    filter: drop-shadow(0 2px 4px rgba(72, 187, 120, 0.4));
+    animation: ringPulse 2s ease-in-out infinite;
+}
+
+.ring-short-break {
+    stroke: #ed8936;
+    filter: drop-shadow(0 2px 4px rgba(237, 137, 54, 0.4));
+}
+
+.ring-short-break.running {
+    stroke: #f6ad55;
+    filter: drop-shadow(0 2px 4px rgba(246, 173, 85, 0.4));
+    animation: ringPulse 2s ease-in-out infinite;
+}
+
+.ring-long-break {
+    stroke: #9f7aea;
+    filter: drop-shadow(0 2px 4px rgba(159, 122, 234, 0.4));
+}
+
+.ring-long-break.running {
+    stroke: #b794f6;
+    filter: drop-shadow(0 2px 4px rgba(183, 148, 246, 0.4));
+    animation: ringPulse 2s ease-in-out infinite;
+}
+
+/* Ring pulse animation */
+@keyframes ringPulse {
+    0%, 100% {
+        stroke-width: 16;
+        opacity: 1;
+    }
+    50% {
+        stroke-width: 20;
+        opacity: 0.8;
+    }
+}
+
+/* Background glow effect */
+.progress-rings-container::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 300px;
+    height: 300px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(102, 126, 234, 0.05) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: -1;
+}
+
+/* Ring completion styles */
+.ring-completed {
+    opacity: 0.6;
+    stroke-width: 12;
+}
+
+.ring-completed.ring-focus {
+    stroke: #48bb78;
+}
+
+.ring-completed.ring-short-break {
+    stroke: #ed8936;
+}
+
+.ring-completed.ring-long-break {
+    stroke: #9f7aea;
 }
 
 /* Controls */

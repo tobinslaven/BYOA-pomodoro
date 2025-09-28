@@ -6,8 +6,10 @@ class PomodoroTimer {
         this.totalTime = 25 * 60; // 25 minutes in seconds
         this.sessionCount = 1;
         this.isFocusSession = true;
-        this.isWorkMode = true; // New property for work/break mode
+        this.isWorkMode = true;
         this.interval = null;
+        this.rings = []; // Array to store all rings
+        this.currentRingIndex = -1; // Index of current active ring
         
         // Settings
         this.settings = {
@@ -21,7 +23,7 @@ class PomodoroTimer {
         this.loadSettings();
         this.updateDisplay();
         this.setupEventListeners();
-        this.setupProgressRing();
+        this.initializeRings();
         
         // Set initial mode button text
         this.modeBtn.textContent = 'Time For A Break?';
@@ -39,7 +41,7 @@ class PomodoroTimer {
         this.settingsModal = document.getElementById('settingsModal');
         this.closeModal = document.getElementById('closeModal');
         this.saveSettingsBtn = document.getElementById('saveSettings');
-        this.progressCircle = document.getElementById('progressCircle');
+        this.ringContainer = document.getElementById('ringContainer');
         this.timerContainer = document.querySelector('.timer-container');
     }
     
@@ -70,13 +72,82 @@ class PomodoroTimer {
         });
     }
     
-    setupProgressRing() {
-        const radius = this.progressCircle.r.baseVal.value;
-        const circumference = radius * 2 * Math.PI;
+    initializeRings() {
+        // Clear any existing rings
+        this.ringContainer.innerHTML = '';
+        this.rings = [];
+        this.currentRingIndex = -1;
+    }
+    
+    createNewRing(sessionType) {
+        const ringIndex = this.rings.length;
+        const ringSize = this.getRingSize(ringIndex);
+        const ringId = `ring-${ringIndex}`;
         
-        this.progressCircle.style.strokeDasharray = `${circumference} ${circumference}`;
-        this.progressCircle.style.strokeDashoffset = circumference;
-        this.circumference = circumference;
+        // Create SVG element
+        const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        svg.setAttribute('class', `ring-svg ring-${ringIndex + 1}`);
+        svg.setAttribute('width', ringSize);
+        svg.setAttribute('height', ringSize);
+        svg.setAttribute('viewBox', `0 0 ${ringSize} ${ringSize}`);
+        
+        // Create background circle
+        const bgCircle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+        bgCircle.setAttribute('class', 'ring-circle-bg');
+        bgCircle.setAttribute('cx', ringSize / 2);
+        bgCircle.setAttribute('cy', ringSize / 2);
+        bgCircle.setAttribute('r', (ringSize / 2) - 20);
+        
+        // Create progress circle
+        const progressCircle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+        progressCircle.setAttribute('class', `ring-circle ring-${sessionType}`);
+        progressCircle.setAttribute('id', ringId);
+        progressCircle.setAttribute('cx', ringSize / 2);
+        progressCircle.setAttribute('cy', ringSize / 2);
+        progressCircle.setAttribute('r', (ringSize / 2) - 20);
+        
+        // Set up stroke dash array
+        const radius = (ringSize / 2) - 20;
+        const circumference = radius * 2 * Math.PI;
+        progressCircle.style.strokeDasharray = `${circumference} ${circumference}`;
+        progressCircle.style.strokeDashoffset = circumference;
+        
+        // Append circles to SVG
+        svg.appendChild(bgCircle);
+        svg.appendChild(progressCircle);
+        
+        // Append SVG to container
+        this.ringContainer.appendChild(svg);
+        
+        // Store ring data
+        const ringData = {
+            id: ringId,
+            element: progressCircle,
+            sessionType: sessionType,
+            circumference: circumference,
+            totalTime: this.totalTime,
+            currentTime: 0,
+            completed: false
+        };
+        
+        this.rings.push(ringData);
+        this.currentRingIndex = ringIndex;
+        
+        return ringData;
+    }
+    
+    getRingSize(ringIndex) {
+        const sizes = [280, 240, 200, 160, 120];
+        return sizes[Math.min(ringIndex, sizes.length - 1)];
+    }
+    
+    getSessionType() {
+        if (this.isWorkMode) {
+            return 'focus';
+        } else {
+            const isLongBreak = this.sessionCount % (this.settings.sessionsBeforeLongBreak + 1) === 0;
+            return isLongBreak ? 'long-break' : 'short-break';
+        }
     }
     
     toggleTimer() {
@@ -89,12 +160,24 @@ class PomodoroTimer {
     
     startTimer() {
         if (!this.isRunning) {
+            // Create new ring if starting a new session
+            if (this.currentTime === 0) {
+                const sessionType = this.getSessionType();
+                this.createNewRing(sessionType);
+            }
+            
             this.isRunning = true;
             this.isPaused = false;
             this.toggleBtn.textContent = 'Pause';
             this.toggleBtn.classList.remove('btn-primary');
             this.toggleBtn.classList.add('btn-secondary');
             this.timerContainer.classList.add('timer-running');
+            
+            // Add running class to current ring
+            if (this.currentRingIndex >= 0) {
+                const currentRing = this.rings[this.currentRingIndex];
+                currentRing.element.classList.add('running');
+            }
             
             this.interval = setInterval(() => {
                 this.currentTime++;
@@ -116,6 +199,12 @@ class PomodoroTimer {
             this.toggleBtn.classList.remove('btn-secondary');
             this.toggleBtn.classList.add('btn-primary');
             this.timerContainer.classList.remove('timer-running');
+            
+            // Remove running class from current ring
+            if (this.currentRingIndex >= 0) {
+                const currentRing = this.rings[this.currentRingIndex];
+                currentRing.element.classList.remove('running');
+            }
             
             clearInterval(this.interval);
         }
@@ -164,48 +253,31 @@ class PomodoroTimer {
         
         clearInterval(this.interval);
         
+        // Mark current ring as completed
+        if (this.currentRingIndex >= 0) {
+            const currentRing = this.rings[this.currentRingIndex];
+            currentRing.completed = true;
+            currentRing.element.classList.add('ring-completed');
+            currentRing.element.classList.remove('running');
+        }
+        
         // Play notification sound
         this.playNotification();
         
         // Show notification
         this.showNotification();
         
-        // Handle session completion based on mode
+        // Handle session completion
         if (this.isWorkMode) {
-            // In work mode, complete the work session
             this.sessionCount++;
             this.currentTime = 0;
             this.updateDisplay();
             this.updateProgress();
         } else {
-            // In break mode, complete the break session
             this.currentTime = 0;
             this.updateDisplay();
             this.updateProgress();
         }
-    }
-    
-    switchToBreak() {
-        this.isFocusSession = false;
-        this.sessionCount++;
-        
-        // Determine break type
-        const isLongBreak = this.sessionCount % (this.settings.sessionsBeforeLongBreak + 1) === 0;
-        this.totalTime = isLongBreak ? this.settings.longBreak * 60 : this.settings.shortBreak * 60;
-        
-        this.sessionTypeDisplay.textContent = isLongBreak ? 'Long Break' : 'Short Break';
-        this.nextBreakDisplay.textContent = 'Focus Time';
-        this.timerContainer.classList.add('timer-break');
-    }
-    
-    switchToFocus() {
-        this.isFocusSession = true;
-        this.totalTime = this.settings.focusTime * 60;
-        
-        this.sessionTypeDisplay.textContent = 'Focus Time';
-        this.nextBreakDisplay.textContent = this.sessionCount % this.settings.sessionsBeforeLongBreak === 0 ? 
-            'Long Break' : 'Short Break';
-        this.timerContainer.classList.remove('timer-break');
     }
     
     updateDisplay() {
@@ -228,9 +300,12 @@ class PomodoroTimer {
     }
     
     updateProgress() {
-        const progress = this.currentTime / this.totalTime;
-        const offset = this.circumference - (progress * this.circumference);
-        this.progressCircle.style.strokeDashoffset = offset;
+        if (this.currentRingIndex >= 0) {
+            const currentRing = this.rings[this.currentRingIndex];
+            const progress = this.currentTime / this.totalTime;
+            const offset = currentRing.circumference - (progress * currentRing.circumference);
+            currentRing.element.style.strokeDashoffset = offset;
+        }
     }
     
     playNotification() {
@@ -267,10 +342,10 @@ class PomodoroTimer {
                 });
             } else if (Notification.permission !== 'denied') {
                 Notification.requestPermission().then(permission => {
-                    if (permission === 'granted') {
-                        this.showNotification();
-                    }
-                });
+                if (permission === 'granted') {
+                    this.showNotification();
+                }
+            });
             }
         }
     }

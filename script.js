@@ -186,10 +186,14 @@ class PomodoroTimer {
             this.toggleBtn.classList.add('btn-secondary');
             this.timerContainer.classList.add('timer-running');
             
-            // Add running class to current ring
+            // Add running class to current ring and restore visual progress
             if (this.currentRingIndex >= 0) {
                 const currentRing = this.rings[this.currentRingIndex];
                 currentRing.element.classList.add('running');
+                // Restore the visual progress
+                const progress = this.currentTime / this.totalTime;
+                const offset = currentRing.circumference - (progress * currentRing.circumference);
+                currentRing.element.style.strokeDashoffset = offset;
             }
             
             this.interval = setInterval(() => {
@@ -197,7 +201,7 @@ class PomodoroTimer {
                 this.updateDisplay();
                 this.updateProgress();
                 
-                if (this.currentTime >= this.totalTime) {
+                if (this.currentTime >= this.rings[this.currentRingIndex].totalTime) {
                     this.completeSession();
                 }
             }, 1000);
@@ -210,6 +214,10 @@ class PomodoroTimer {
             if (this.currentRingIndex >= 0) {
                 const currentRing = this.rings[this.currentRingIndex];
                 currentRing.currentTime = this.currentTime;
+                // Update the ring's visual progress
+                const progress = this.currentTime / this.totalTime;
+                const offset = currentRing.circumference - (progress * currentRing.circumference);
+                currentRing.element.style.strokeDashoffset = offset;
             }
             
             this.isRunning = false;
@@ -331,7 +339,7 @@ class PomodoroTimer {
     updateProgress() {
         if (this.currentRingIndex >= 0) {
             const currentRing = this.rings[this.currentRingIndex];
-            const progress = this.currentTime / this.totalTime;
+            const progress = this.currentTime / currentRing.totalTime;
             const offset = currentRing.circumference - (progress * currentRing.circumference);
             currentRing.element.style.strokeDashoffset = offset;
         }

@@ -28,7 +28,7 @@
             
             <div class="controls">
                 <button class="btn btn-primary" id="toggleBtn">Start</button>
-                <button class="btn btn-secondary" id="resetBtn">Reset</button>
+                <button class="btn btn-secondary" id="modeBtn">Time For A Break?</button>
             </div>
             
             <div class="session-info">
@@ -40,15 +40,11 @@
                     <span>Next: </span>
                     <span id="nextBreak">Short Break</span>
                 </div>
+                <div class="settings-control">
+                    <button class="btn btn-settings" id="settingsBtn">Settings</button>
+                </div>
             </div>
         </main>
-        
-        <footer>
-            <div class="footer-controls">
-                <button class="btn btn-settings" id="modeBtn">Mode</button>
-                <button class="btn btn-settings" id="settingsBtn">Settings</button>
-            </div>
-        </footer>
     </div>
     
     <!-- Settings Modal -->
@@ -77,6 +73,7 @@
                 </div>
             </div>
             <div class="modal-footer">
+                <button class="btn btn-secondary" id="resetBtn">Reset Current Ring</button>
                 <button class="btn btn-primary" id="saveSettings">Save Settings</button>
             </div>
         </div>

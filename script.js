@@ -185,7 +185,7 @@ class PomodoroTimer {
             }
             
             if (!shouldResume) {
-                // Create new ring for concentric ordering
+                // Only create new ring if no existing ring of this type
                 this.createNewRing(sessionType);
             }
             
@@ -251,17 +251,29 @@ class PomodoroTimer {
     }
     
     resetTimer() {
-        this.isRunning = false;
-        this.isPaused = false;
-        this.currentTime = 0;
-        this.toggleBtn.textContent = 'Start';
-        this.toggleBtn.classList.remove('btn-secondary');
-        this.toggleBtn.classList.add('btn-primary');
-        this.timerContainer.classList.remove('timer-running');
-        
-        clearInterval(this.interval);
-        this.updateDisplay();
-        this.updateProgress();
+        // Only reset if there's an active ring
+        if (this.currentRingIndex >= 0) {
+            this.isRunning = false;
+            this.isPaused = false;
+            this.currentTime = 0;
+            this.toggleBtn.textContent = 'Start';
+            this.toggleBtn.classList.remove('btn-secondary');
+            this.toggleBtn.classList.add('btn-primary');
+            this.timerContainer.classList.remove('timer-running');
+            
+            // Reset only the current active ring's progress
+            const currentRing = this.rings[this.currentRingIndex];
+            currentRing.currentTime = 0;
+            currentRing.element.style.strokeDashoffset = currentRing.circumference;
+            currentRing.element.classList.remove('running');
+            
+            clearInterval(this.interval);
+            this.updateDisplay();
+            this.updateProgress();
+            
+            // Close settings modal after reset
+            this.closeSettings();
+        }
     }
     
     toggleMode() {
@@ -277,8 +289,15 @@ class PomodoroTimer {
         
         this.isWorkMode = !this.isWorkMode;
         
-        // Reset timer to new mode
-        this.resetTimer();
+        // Stop current timer but don't reset
+        this.isRunning = false;
+        this.isPaused = false;
+        this.toggleBtn.textContent = 'Start';
+        this.toggleBtn.classList.remove('btn-secondary');
+        this.toggleBtn.classList.add('btn-primary');
+        this.timerContainer.classList.remove('timer-running');
+        
+        clearInterval(this.interval);
         
         if (this.isWorkMode) {
             this.totalTime = this.settings.focusTime * 60;
@@ -323,24 +342,37 @@ class PomodoroTimer {
         // Handle session completion
         if (this.isWorkMode) {
             this.sessionCount++;
-            this.currentTime = 0;
-            this.updateDisplay();
-            this.updateProgress();
-        } else {
-            this.currentTime = 0;
-            this.updateDisplay();
-            this.updateProgress();
         }
+        
+        // Reset for next session
+        this.currentTime = 0;
+        this.currentRingIndex = -1;
+        this.updateDisplay();
+        this.updateProgress();
     }
     
     updateDisplay() {
-        const minutes = Math.floor((this.totalTime - this.currentTime) / 60);
-        const seconds = (this.totalTime - this.currentTime) % 60;
+        if (this.currentRingIndex >= 0) {
+            // Show remaining time for current ring
+            const currentRing = this.rings[this.currentRingIndex];
+            const remainingTime = currentRing.totalTime - this.currentTime;
+            const minutes = Math.floor(remainingTime / 60);
+            const seconds = remainingTime % 60;
+            
+            this.timeDisplay.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        } else {
+            // Show full time for new session
+            const minutes = Math.floor(this.totalTime / 60);
+            const seconds = this.totalTime % 60;
+            
+            this.timeDisplay.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        }
         
-        this.timeDisplay.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
         this.sessionCountDisplay.textContent = this.sessionCount;
         
         // Update page title with timer
+        const minutes = Math.floor((this.totalTime - this.currentTime) / 60);
+        const seconds = (this.totalTime - this.currentTime) % 60;
         this.updatePageTitle(minutes, seconds);
     }
     

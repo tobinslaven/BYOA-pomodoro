@@ -79,6 +79,16 @@ class PomodoroTimer {
         this.currentRingIndex = -1;
     }
     
+    restoreAllRingsProgress() {
+        // Restore visual progress for all rings
+        for (let i = 0; i < this.rings.length; i++) {
+            const ring = this.rings[i];
+            const progress = ring.currentTime / ring.totalTime;
+            const offset = ring.circumference - (progress * ring.circumference);
+            ring.element.style.strokeDashoffset = offset;
+        }
+    }
+    
     createNewRing(sessionType) {
         const ringIndex = this.rings.length;
         const ringSize = this.getRingSize(ringIndex);
@@ -190,8 +200,8 @@ class PomodoroTimer {
             if (this.currentRingIndex >= 0) {
                 const currentRing = this.rings[this.currentRingIndex];
                 currentRing.element.classList.add('running');
-                // Restore the visual progress
-                const progress = this.currentTime / this.totalTime;
+                // Restore the visual progress using the ring's totalTime
+                const progress = this.currentTime / currentRing.totalTime;
                 const offset = currentRing.circumference - (progress * currentRing.circumference);
                 currentRing.element.style.strokeDashoffset = offset;
             }
@@ -232,6 +242,9 @@ class PomodoroTimer {
                 const currentRing = this.rings[this.currentRingIndex];
                 currentRing.element.classList.remove('running');
             }
+            
+            // Restore all rings' visual progress
+            this.restoreAllRingsProgress();
             
             clearInterval(this.interval);
         }
@@ -276,6 +289,9 @@ class PomodoroTimer {
             this.sessionTypeDisplay.textContent = 'Break Time';
             this.modeBtn.textContent = 'Ready To Work?';
         }
+        
+        // Restore all rings' visual progress
+        this.restoreAllRingsProgress();
         
         this.updateDisplay();
     }

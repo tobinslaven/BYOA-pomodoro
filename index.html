@@ -5,38 +5,84 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pomodoro Timer</title>
     <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
     <div class="container">
-        <h1>🍅 Pomodoro Timer</h1>
-        <div class="timer-display">
-            <div class="time" id="time">25:00</div>
-        </div>
-        <div class="controls">
-            <button id="startBtn" class="btn start">Start</button>
-            <button id="pauseBtn" class="btn pause" disabled>Pause</button>
-            <button id="resetBtn" class="btn reset">Reset</button>
-        </div>
-        <div class="session-info">
-            <p>Session: <span id="sessionCount">1</span></p>
-            <p>Status: <span id="status">Ready to start</span></p>
-        </div>
-        <div class="settings">
-            <h3>Settings</h3>
-            <div class="setting-group">
-                <label for="workTime">Work Time (minutes):</label>
-                <input type="number" id="workTime" value="25" min="1" max="60">
+        <header>
+            <h1>Pomodoro Timer</h1>
+            <p class="subtitle">Focus • Break • Repeat</p>
+        </header>
+        
+        <main class="timer-container">
+            <div class="timer-display">
+                <div class="time" id="time">25:00</div>
+                <div class="session-type" id="sessionType">Focus Time</div>
             </div>
-            <div class="setting-group">
-                <label for="breakTime">Break Time (minutes):</label>
-                <input type="number" id="breakTime" value="5" min="1" max="30">
+            
+            <div class="progress-ring">
+                <svg class="progress-ring-svg" width="200" height="200">
+                    <circle class="progress-ring-circle-bg" cx="100" cy="100" r="90"></circle>
+                    <circle class="progress-ring-circle" cx="100" cy="100" r="90" id="progressCircle"></circle>
+                </svg>
             </div>
-            <div class="setting-group">
-                <label for="longBreakTime">Long Break Time (minutes):</label>
-                <input type="number" id="longBreakTime" value="15" min="1" max="60">
+            
+            <div class="controls">
+                <button class="btn btn-primary" id="toggleBtn">Start</button>
+                <button class="btn btn-secondary" id="resetBtn">Reset</button>
+            </div>
+            
+            <div class="session-info">
+                <div class="session-counter">
+                    <span>Session: </span>
+                    <span id="sessionCount">1</span>
+                </div>
+                <div class="break-info">
+                    <span>Next: </span>
+                    <span id="nextBreak">Short Break</span>
+                </div>
+            </div>
+        </main>
+        
+        <footer>
+            <div class="footer-controls">
+                <button class="btn btn-settings" id="modeBtn">Mode</button>
+                <button class="btn btn-settings" id="settingsBtn">Settings</button>
+            </div>
+        </footer>
+    </div>
+    
+    <!-- Settings Modal -->
+    <div class="modal" id="settingsModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Settings</h2>
+                <button class="close-btn" id="closeModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="setting-group">
+                    <label for="focusTime">Focus Time (minutes)</label>
+                    <input type="number" id="focusTime" value="25" min="1" max="60">
+                </div>
+                <div class="setting-group">
+                    <label for="shortBreak">Short Break (minutes)</label>
+                    <input type="number" id="shortBreak" value="5" min="1" max="30">
+                </div>
+                <div class="setting-group">
+                    <label for="longBreak">Long Break (minutes)</label>
+                    <input type="number" id="longBreak" value="15" min="1" max="60">
+                </div>
+                <div class="setting-group">
+                    <label for="sessionsBeforeLongBreak">Sessions before long break</label>
+                    <input type="number" id="sessionsBeforeLongBreak" value="4" min="1" max="10">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-primary" id="saveSettings">Save Settings</button>
             </div>
         </div>
     </div>
+    
     <script src="script.js"></script>
 </body>
 </html>

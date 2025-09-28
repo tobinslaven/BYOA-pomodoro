@@ -160,7 +160,7 @@ header h1 {
 .ring-focus.running {
     stroke: #48bb78;
     filter: drop-shadow(0 2px 4px rgba(72, 187, 120, 0.4));
-    animation: ringPulse 2s ease-in-out infinite;
+    animation: ringPulse 8s ease-in-out infinite;
 }
 
 .ring-short-break {
@@ -171,7 +171,7 @@ header h1 {
 .ring-short-break.running {
     stroke: #f6ad55;
     filter: drop-shadow(0 2px 4px rgba(246, 173, 85, 0.4));
-    animation: ringPulse 2s ease-in-out infinite;
+    animation: ringPulse 8s ease-in-out infinite;
 }
 
 .ring-long-break {
@@ -182,18 +182,20 @@ header h1 {
 .ring-long-break.running {
     stroke: #b794f6;
     filter: drop-shadow(0 2px 4px rgba(183, 148, 246, 0.4));
-    animation: ringPulse 2s ease-in-out infinite;
+    animation: ringPulse 8s ease-in-out infinite;
 }
 
-/* Ring pulse animation */
+/* Ring pulse animation - Calm breathing rate (4-6 breaths per minute) */
 @keyframes ringPulse {
     0%, 100% {
         stroke-width: 16;
         opacity: 1;
+        transform: scale(1);
     }
     50% {
         stroke-width: 20;
-        opacity: 0.8;
+        opacity: 0.9;
+        transform: scale(1.02);
     }
 }
 
@@ -420,7 +422,7 @@ header h1 {
 }
 
 .timer-running .time {
-    animation: pulse 2s infinite;
+    animation: pulse 8s infinite;
 }
 
 /* These styles are now handled above in the enhanced ring styles section */

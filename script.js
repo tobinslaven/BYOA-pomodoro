@@ -160,9 +160,25 @@ class PomodoroTimer {
     
     startTimer() {
         if (!this.isRunning) {
-            // Create new ring if starting a new session
-            if (this.currentTime === 0) {
-                const sessionType = this.getSessionType();
+            const sessionType = this.getSessionType();
+            
+            // Check if there's an existing ring of the same type that's not completed
+            let existingRingIndex = -1;
+            for (let i = 0; i < this.rings.length; i++) {
+                const ring = this.rings[i];
+                if (ring.sessionType === sessionType && !ring.completed) {
+                    existingRingIndex = i;
+                    break;
+                }
+            }
+            
+            if (existingRingIndex >= 0) {
+                // Resume existing ring
+                this.currentRingIndex = existingRingIndex;
+                const existingRing = this.rings[existingRingIndex];
+                this.currentTime = existingRing.currentTime;
+            } else {
+                // Create new ring if no existing ring of this type
                 this.createNewRing(sessionType);
             }
             
@@ -193,6 +209,12 @@ class PomodoroTimer {
     
     pauseTimer() {
         if (this.isRunning) {
+            // Save current progress to the current ring
+            if (this.currentRingIndex >= 0) {
+                const currentRing = this.rings[this.currentRingIndex];
+                currentRing.currentTime = this.currentTime;
+            }
+            
             this.isRunning = false;
             this.isPaused = true;
             this.toggleBtn.textContent = 'Start';
@@ -225,6 +247,16 @@ class PomodoroTimer {
     }
     
     toggleMode() {
+        // Save current progress to the current ring before switching
+        if (this.currentRingIndex >= 0 && this.currentTime > 0) {
+            const currentRing = this.rings[this.currentRingIndex];
+            currentRing.currentTime = this.currentTime;
+            // Update the ring's visual progress
+            const progress = this.currentTime / this.totalTime;
+            const offset = currentRing.circumference - (progress * currentRing.circumference);
+            currentRing.element.style.strokeDashoffset = offset;
+        }
+        
         this.isWorkMode = !this.isWorkMode;
         
         // Reset timer to new mode

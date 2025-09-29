@@ -375,6 +375,10 @@ header h1 {
     backdrop-filter: blur(5px);
 }
 
+.modal-show {
+    display: block;
+}
+
 .modal-content {
     background: white;
     margin: 5% auto;

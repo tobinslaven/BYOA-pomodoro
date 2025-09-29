@@ -43,6 +43,9 @@ class PomodoroTimer {
         this.settingsModal = document.getElementById('settingsModal');
         this.closeModal = document.getElementById('closeModal');
         this.saveSettingsBtn = document.getElementById('saveSettings');
+        this.focusPromptModal = document.getElementById('focusPromptModal');
+        this.focusTaskInput = document.getElementById('focusTask');
+        this.startFocusBtn = document.getElementById('startFocus');
         this.ringContainer = document.getElementById('ringContainer');
         this.timerContainer = document.querySelector('.timer-container');
     }
@@ -55,6 +58,7 @@ class PomodoroTimer {
         this.settingsBtn.addEventListener('click', () => this.openSettings());
         this.closeModal.addEventListener('click', () => this.closeSettings());
         this.saveSettingsBtn.addEventListener('click', () => this.saveSettings());
+        this.startFocusBtn.addEventListener('click', () => this.startFocusSession());
         
         // Close modal when clicking outside
         this.settingsModal.addEventListener('click', (e) => {
@@ -65,12 +69,16 @@ class PomodoroTimer {
         
         // Keyboard shortcuts
         document.addEventListener('keydown', (e) => {
-            if (e.code === 'Space' && !this.settingsModal.classList.contains('modal-show')) {
+            if (e.code === 'Space' && !this.settingsModal.classList.contains('modal-show') && !this.focusPromptModal.classList.contains('modal-show')) {
                 e.preventDefault();
                 this.toggleTimer();
             }
             if (e.code === 'Escape') {
                 this.closeSettings();
+            }
+            if (e.code === 'Enter' && this.focusPromptModal.classList.contains('modal-show')) {
+                e.preventDefault();
+                this.startFocusSession();
             }
         });
     }
@@ -80,6 +88,8 @@ class PomodoroTimer {
         this.ringContainer.innerHTML = '';
         this.rings = [];
         this.currentRingIndex = -1;
+        this.currentFocusTask = '';
+        this.hasStartedFirstWorkSession = false;
     }
     
     restoreAllRingsProgress() {
@@ -180,6 +190,16 @@ class PomodoroTimer {
     }
     
     startTimer() {
+        // Show focus prompt for first work session
+        if (this.isWorkMode && !this.hasStartedFirstWorkSession) {
+            this.showFocusPrompt();
+            return;
+        }
+        
+        this.startTimerInternal();
+    }
+    
+    startTimerInternal() {
         if (!this.isRunning) {
             const sessionType = this.getSessionType();
             
@@ -337,6 +357,30 @@ class PomodoroTimer {
         this.updateDisplay();
     }
     
+    showFocusPrompt() {
+        this.focusPromptModal.classList.add('modal-show');
+        this.focusTaskInput.focus();
+    }
+    
+    startFocusSession() {
+        const focusTask = this.focusTaskInput.value.trim();
+        if (focusTask) {
+            this.currentFocusTask = focusTask;
+            this.hasStartedFirstWorkSession = true;
+            this.focusPromptModal.classList.remove('modal-show');
+            
+            // Update the session type display to show the focus task
+            this.sessionTypeDisplay.textContent = focusTask;
+            
+            // Start the timer
+            this.startTimerInternal();
+        } else {
+            // Show validation message or keep modal open
+            this.focusTaskInput.placeholder = "Please enter a focus task...";
+            this.focusTaskInput.style.borderColor = '#e53e3e';
+        }
+    }
+    
     updateButtonStates() {
         // Update extend button state
         if (this.isRunning && this.currentRingIndex >= 0) {
@@ -411,7 +455,7 @@ class PomodoroTimer {
         
         // Auto-start new session after 5 seconds
         setTimeout(() => {
-            this.startTimer();
+            this.startTimerInternal();
         }, 5000);
     }
     
@@ -433,6 +477,15 @@ class PomodoroTimer {
         }
         
         this.sessionCountDisplay.textContent = this.sessionCount;
+        
+        // Update session type display
+        if (this.isWorkMode && this.currentFocusTask) {
+            this.sessionTypeDisplay.textContent = this.currentFocusTask;
+        } else if (this.isWorkMode) {
+            this.sessionTypeDisplay.textContent = 'Focus Time';
+        } else {
+            this.sessionTypeDisplay.textContent = 'Break Time';
+        }
         
         // Update page title with timer - use current mode time, not ring time
         const minutes = Math.floor((this.totalTime - this.currentTime) / 60);

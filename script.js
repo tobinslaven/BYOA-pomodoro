@@ -24,6 +24,7 @@ class PomodoroTimer {
         this.updateDisplay();
         this.setupEventListeners();
         this.initializeRings();
+        this.updateButtonStates();
         
         // Set initial mode button text
         this.modeBtn.textContent = 'Time For A Break?';
@@ -35,6 +36,7 @@ class PomodoroTimer {
         this.sessionCountDisplay = document.getElementById('sessionCount');
         this.nextBreakDisplay = document.getElementById('nextBreak');
         this.toggleBtn = document.getElementById('toggleBtn');
+        this.extendBtn = document.getElementById('extendBtn');
         this.resetBtn = document.getElementById('resetBtn');
         this.modeBtn = document.getElementById('modeBtn');
         this.settingsBtn = document.getElementById('settingsBtn');
@@ -47,6 +49,7 @@ class PomodoroTimer {
     
     setupEventListeners() {
         this.toggleBtn.addEventListener('click', () => this.toggleTimer());
+        this.extendBtn.addEventListener('click', () => this.extendTimer());
         this.resetBtn.addEventListener('click', () => this.resetTimer());
         this.modeBtn.addEventListener('click', () => this.toggleMode());
         this.settingsBtn.addEventListener('click', () => this.openSettings());
@@ -204,6 +207,9 @@ class PomodoroTimer {
             this.toggleBtn.classList.add('btn-secondary');
             this.timerContainer.classList.add('timer-running');
             
+            // Update button states
+            this.updateButtonStates();
+            
             // Add running class to current ring and restore visual progress
             if (this.currentRingIndex >= 0) {
                 const currentRing = this.rings[this.currentRingIndex];
@@ -245,6 +251,9 @@ class PomodoroTimer {
             this.toggleBtn.classList.add('btn-primary');
             this.timerContainer.classList.remove('timer-running');
             
+            // Update button states
+            this.updateButtonStates();
+            
             // Remove running class from current ring
             if (this.currentRingIndex >= 0) {
                 const currentRing = this.rings[this.currentRingIndex];
@@ -276,6 +285,7 @@ class PomodoroTimer {
             currentRing.element.classList.remove('running');
             
             clearInterval(this.interval);
+            this.updateButtonStates();
             this.updateDisplay();
             this.updateProgress();
             
@@ -321,6 +331,42 @@ class PomodoroTimer {
         // Restore all rings' visual progress
         this.restoreAllRingsProgress();
         
+        // Update button states
+        this.updateButtonStates();
+        
+        this.updateDisplay();
+    }
+    
+    updateButtonStates() {
+        // Update extend button state
+        if (this.isRunning && this.currentRingIndex >= 0) {
+            this.extendBtn.disabled = false;
+        } else {
+            this.extendBtn.disabled = true;
+        }
+    }
+    
+    extendTimer() {
+        // Only allow extending when timer is running
+        if (!this.isRunning || this.currentRingIndex < 0) {
+            return;
+        }
+        
+        // Add 5 minutes (300 seconds) to the current ring
+        const currentRing = this.rings[this.currentRingIndex];
+        currentRing.totalTime += 300; // Add 5 minutes
+        
+        // Update the ring's circumference and progress
+        const newCircumference = 2 * Math.PI * currentRing.radius;
+        currentRing.circumference = newCircumference;
+        currentRing.element.setAttribute('stroke-dasharray', newCircumference);
+        
+        // Recalculate the progress with the new total time
+        const progress = this.currentTime / currentRing.totalTime;
+        const offset = currentRing.circumference - (progress * currentRing.circumference);
+        currentRing.element.style.strokeDashoffset = offset;
+        
+        // Update the display to show the new time
         this.updateDisplay();
     }
     
@@ -359,6 +405,7 @@ class PomodoroTimer {
         // Reset for next session
         this.currentTime = 0;
         this.currentRingIndex = -1;
+        this.updateButtonStates();
         this.updateDisplay();
         this.updateProgress();
         

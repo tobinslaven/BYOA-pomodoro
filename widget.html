@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pomodoro Timer Widget</title>
+    <style>
+        /* Widget-specific styles - scoped to prevent conflicts */
+        .pomodoro-widget {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 400px;
+            margin: 0 auto;
+            background: #ffffff;
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            padding: 1.5rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .pomodoro-widget::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+        }
+
+        .widget-header {
+            text-align: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .widget-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #2d3748;
+            margin: 0 0 0.5rem 0;
+        }
+
+        .widget-subtitle {
+            font-size: 0.9rem;
+            color: #718096;
+            margin: 0;
+        }
+
+        .widget-timer-display {
+            text-align: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .widget-time {
+            font-size: 3rem;
+            font-weight: 300;
+            color: #2d3748;
+            margin: 0 0 0.5rem 0;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .widget-session-type {
+            font-size: 1rem;
+            color: #718096;
+            margin: 0;
+        }
+
+        .widget-progress-rings-container {
+            position: relative;
+            width: 200px;
+            height: 200px;
+            margin: 0 auto 1.5rem auto;
+        }
+
+        .widget-progress-ring {
+            position: relative;
+            width: 100%;
+            height: 100%;
+        }
+
+        .widget-ring-svg {
+            width: 100%;
+            height: 100%;
+            transform: rotate(-90deg);
+        }
+
+        .widget-ring-circle-bg {
+            fill: none;
+            stroke: #e2e8f0;
+            stroke-width: 8;
+            opacity: 0.1;
+        }
+
+        .widget-ring-circle {
+            fill: none;
+            stroke-width: 8;
+            stroke-linecap: round;
+            transition: stroke-dashoffset 0.3s ease;
+        }
+
+        .widget-ring-focus {
+            stroke: #00d4aa;
+        }
+
+        .widget-ring-short-break {
+            stroke: #ff9500;
+        }
+
+        .widget-ring-long-break {
+            stroke: #007aff;
+        }
+
+        .widget-ring-running {
+            animation: widget-ringPulse 8s ease-in-out infinite;
+        }
+
+        @keyframes widget-ringPulse {
+            0%, 100% { stroke-width: 8; opacity: 1; }
+            50% { stroke-width: 12; opacity: 0.8; }
+        }
+
+        .widget-ring-completed {
+            opacity: 0.8;
+            stroke-width: 6;
+        }
+
+        .widget-controls {
+            display: flex;
+            gap: 0.75rem;
+            justify-content: center;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .widget-btn {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            min-width: 80px;
+        }
+
+        .widget-btn-primary {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+        }
+
+        .widget-btn-primary:hover:not(:disabled) {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .widget-btn-extend {
+            background: linear-gradient(135deg, #48bb78, #38a169);
+            color: white;
+            box-shadow: 0 2px 8px rgba(72, 187, 120, 0.3);
+        }
+
+        .widget-btn-extend:hover:not(:disabled) {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(72, 187, 120, 0.4);
+        }
+
+        .widget-btn-secondary {
+            background: #f7fafc;
+            color: #4a5568;
+            border: 2px solid #e2e8f0;
+        }
+
+        .widget-btn-secondary:hover:not(:disabled) {
+            background: #edf2f7;
+            border-color: #cbd5e0;
+        }
+
+        .widget-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        .widget-session-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem;
+            background: #f7fafc;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            color: #4a5568;
+        }
+
+        .widget-session-counter, .widget-break-info {
+            text-align: center;
+        }
+
+        .widget-session-counter span:first-child,
+        .widget-break-info span:first-child {
+            display: block;
+            font-weight: 500;
+            margin-bottom: 0.25rem;
+        }
+
+        /* Responsive design */
+        @media (max-width: 480px) {
+            .pomodoro-widget {
+                max-width: 100%;
+                margin: 0;
+                border-radius: 0;
+            }
+            
+            .widget-time {
+                font-size: 2.5rem;
+            }
+            
+            .widget-progress-rings-container {
+                width: 150px;
+                height: 150px;
+            }
+            
+            .widget-controls {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .widget-btn {
+                width: 100%;
+                max-width: 200px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="pomodoro-widget" id="pomodoroWidget">
+        <div class="widget-header">
+            <h2 class="widget-title">Pomodoro Timer</h2>
+            <p class="widget-subtitle">Focus • Break • Repeat</p>
+        </div>
+        
+        <div class="widget-timer-display">
+            <div class="widget-time" id="widgetTime">25:00</div>
+            <div class="widget-session-type" id="widgetSessionType">Focus Time</div>
+        </div>
+        
+        <div class="widget-progress-rings-container">
+            <div class="widget-progress-ring" id="widgetRingContainer">
+                <!-- Rings will be dynamically added here -->
+            </div>
+        </div>
+        
+        <div class="widget-controls">
+            <button class="widget-btn widget-btn-primary" id="widgetToggleBtn">Start</button>
+            <button class="widget-btn widget-btn-extend" id="widgetExtendBtn">+5 Min</button>
+            <button class="widget-btn widget-btn-secondary" id="widgetModeBtn">Time For A Break?</button>
+        </div>
+        
+        <div class="widget-session-info">
+            <div class="widget-session-counter">
+                <span>Session</span>
+                <span id="widgetSessionCount">1</span>
+            </div>
+            <div class="widget-break-info">
+                <span>Next</span>
+                <span id="widgetNextBreak">Short Break</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Widget-specific Pomodoro Timer Class
+        class PomodoroWidget {
+            constructor() {
+                this.settings = {
+                    focusTime: 25,
+                    shortBreak: 5,
+                    longBreak: 15,
+                    sessionsBeforeLongBreak: 4
+                };
+                
+                this.isWorkMode = true;
+                this.isRunning = false;
+                this.isPaused = false;
+                this.currentTime = 0;
+                this.totalTime = this.settings.focusTime * 60;
+                this.sessionCount = 1;
+                this.rings = [];
+                this.currentRingIndex = -1;
+                
+                this.initializeElements();
+                this.updateDisplay();
+                this.setupEventListeners();
+                this.initializeRings();
+                this.updateButtonStates();
+            }
+            
+            initializeElements() {
+                this.timeDisplay = document.getElementById('widgetTime');
+                this.sessionTypeDisplay = document.getElementById('widgetSessionType');
+                this.sessionCountDisplay = document.getElementById('widgetSessionCount');
+                this.nextBreakDisplay = document.getElementById('widgetNextBreak');
+                this.toggleBtn = document.getElementById('widgetToggleBtn');
+                this.extendBtn = document.getElementById('widgetExtendBtn');
+                this.modeBtn = document.getElementById('widgetModeBtn');
+                this.ringContainer = document.getElementById('widgetRingContainer');
+            }
+            
+            setupEventListeners() {
+                this.toggleBtn.addEventListener('click', () => this.toggleTimer());
+                this.extendBtn.addEventListener('click', () => this.extendTimer());
+                this.modeBtn.addEventListener('click', () => this.toggleMode());
+            }
+            
+            initializeRings() {
+                this.ringContainer.innerHTML = '';
+                this.rings = [];
+                this.currentRingIndex = -1;
+            }
+            
+            createNewRing(sessionType) {
+                const ringIndex = this.rings.length;
+                const ringSize = this.getRingSize(ringIndex);
+                const ringId = `widget-ring-${ringIndex}`;
+                
+                const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+                svg.setAttribute('class', 'widget-ring-svg');
+                svg.setAttribute('viewBox', '0 0 200 200');
+                
+                const circleBg = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                circleBg.setAttribute('class', 'widget-ring-circle-bg');
+                circleBg.setAttribute('cx', '100');
+                circleBg.setAttribute('cy', '100');
+                circleBg.setAttribute('r', ringSize);
+                
+                const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                circle.setAttribute('class', `widget-ring-circle widget-ring-${sessionType}`);
+                circle.setAttribute('cx', '100');
+                circle.setAttribute('cy', '100');
+                circle.setAttribute('r', ringSize);
+                
+                const circumference = 2 * Math.PI * ringSize;
+                circle.setAttribute('stroke-dasharray', circumference);
+                circle.style.strokeDashoffset = circumference;
+                
+                svg.appendChild(circleBg);
+                svg.appendChild(circle);
+                this.ringContainer.appendChild(svg);
+                
+                const ring = {
+                    element: circle,
+                    totalTime: this.totalTime,
+                    currentTime: 0,
+                    circumference: circumference,
+                    radius: ringSize,
+                    completed: false,
+                    sessionType: sessionType
+                };
+                
+                this.rings.push(ring);
+                return this.rings.length - 1;
+            }
+            
+            getRingSize(ringIndex) {
+                const baseRadius = 80;
+                const ringSpacing = 15;
+                return baseRadius - (ringIndex * ringSpacing);
+            }
+            
+            toggleTimer() {
+                if (this.isRunning) {
+                    this.pauseTimer();
+                } else {
+                    this.startTimer();
+                }
+            }
+            
+            startTimer() {
+                // Check for existing incomplete ring of same type
+                let existingRingIndex = -1;
+                for (let i = 0; i < this.rings.length; i++) {
+                    const ring = this.rings[i];
+                    if (!ring.completed && ring.sessionType === (this.isWorkMode ? 'focus' : 'short-break')) {
+                        existingRingIndex = i;
+                        break;
+                    }
+                }
+                
+                if (existingRingIndex >= 0) {
+                    this.currentRingIndex = existingRingIndex;
+                    this.currentTime = this.rings[existingRingIndex].currentTime;
+                } else {
+                    this.currentRingIndex = this.createNewRing(this.isWorkMode ? 'focus' : 'short-break');
+                    this.currentTime = 0;
+                }
+                
+                this.isRunning = true;
+                this.isPaused = false;
+                this.toggleBtn.textContent = 'Pause';
+                this.toggleBtn.classList.remove('widget-btn-primary');
+                this.toggleBtn.classList.add('widget-btn-secondary');
+                
+                this.updateButtonStates();
+                
+                if (this.currentRingIndex >= 0) {
+                    const currentRing = this.rings[this.currentRingIndex];
+                    currentRing.element.classList.add('widget-ring-running');
+                    const progress = this.currentTime / currentRing.totalTime;
+                    const offset = currentRing.circumference - (progress * currentRing.circumference);
+                    currentRing.element.style.strokeDashoffset = offset;
+                }
+                
+                this.interval = setInterval(() => {
+                    this.currentTime++;
+                    this.updateDisplay();
+                    this.updateProgress();
+                    
+                    if (this.currentTime >= this.rings[this.currentRingIndex].totalTime) {
+                        this.completeSession();
+                    }
+                }, 1000);
+            }
+            
+            pauseTimer() {
+                if (this.currentRingIndex >= 0) {
+                    const currentRing = this.rings[this.currentRingIndex];
+                    currentRing.currentTime = this.currentTime;
+                    const progress = this.currentTime / this.totalTime;
+                    const offset = currentRing.circumference - (progress * currentRing.circumference);
+                    currentRing.element.style.strokeDashoffset = offset;
+                }
+                
+                this.isRunning = false;
+                this.isPaused = true;
+                this.toggleBtn.textContent = 'Start';
+                this.toggleBtn.classList.remove('widget-btn-secondary');
+                this.toggleBtn.classList.add('widget-btn-primary');
+                
+                this.updateButtonStates();
+                
+                if (this.currentRingIndex >= 0) {
+                    this.rings[this.currentRingIndex].element.classList.remove('widget-ring-running');
+                }
+                
+                clearInterval(this.interval);
+                this.updateDisplay();
+                this.updateProgress();
+            }
+            
+            toggleMode() {
+                if (this.currentRingIndex >= 0 && this.currentTime > 0) {
+                    const currentRing = this.rings[this.currentRingIndex];
+                    currentRing.currentTime = this.currentTime;
+                    const progress = this.currentTime / this.totalTime;
+                    const offset = currentRing.circumference - (progress * currentRing.circumference);
+                    currentRing.element.style.strokeDashoffset = offset;
+                }
+                
+                this.isWorkMode = !this.isWorkMode;
+                
+                this.isRunning = false;
+                this.isPaused = false;
+                this.currentTime = 0;
+                this.toggleBtn.textContent = 'Start';
+                this.toggleBtn.classList.remove('widget-btn-secondary');
+                this.toggleBtn.classList.add('widget-btn-primary');
+                
+                clearInterval(this.interval);
+                
+                if (this.isWorkMode) {
+                    this.totalTime = this.settings.focusTime * 60;
+                    this.sessionTypeDisplay.textContent = 'Focus Time';
+                    this.modeBtn.textContent = 'Time For A Break?';
+                } else {
+                    this.totalTime = this.settings.shortBreak * 60;
+                    this.sessionTypeDisplay.textContent = 'Break Time';
+                    this.modeBtn.textContent = 'Ready To Work?';
+                }
+                
+                this.updateButtonStates();
+                this.updateDisplay();
+            }
+            
+            extendTimer() {
+                if (!this.isRunning || this.currentRingIndex < 0) {
+                    return;
+                }
+                
+                const currentRing = this.rings[this.currentRingIndex];
+                currentRing.totalTime += 300;
+                
+                const newCircumference = 2 * Math.PI * currentRing.radius;
+                currentRing.circumference = newCircumference;
+                currentRing.element.setAttribute('stroke-dasharray', newCircumference);
+                
+                const progress = this.currentTime / currentRing.totalTime;
+                const offset = currentRing.circumference - (progress * currentRing.circumference);
+                currentRing.element.style.strokeDashoffset = offset;
+                
+                this.updateDisplay();
+            }
+            
+            completeSession() {
+                this.isRunning = false;
+                this.isPaused = false;
+                this.toggleBtn.textContent = 'Start';
+                this.toggleBtn.classList.remove('widget-btn-secondary');
+                this.toggleBtn.classList.add('widget-btn-primary');
+                
+                clearInterval(this.interval);
+                
+                if (this.currentRingIndex >= 0) {
+                    const currentRing = this.rings[this.currentRingIndex];
+                    currentRing.completed = true;
+                    currentRing.element.classList.add('widget-ring-completed');
+                    currentRing.element.classList.remove('widget-ring-running');
+                    currentRing.element.style.strokeDashoffset = '0';
+                }
+                
+                if (this.isWorkMode) {
+                    this.sessionCount++;
+                }
+                
+                this.currentTime = 0;
+                this.currentRingIndex = -1;
+                this.updateButtonStates();
+                this.updateDisplay();
+                this.updateProgress();
+                
+                // Auto-start new session after 5 seconds
+                setTimeout(() => {
+                    this.startTimer();
+                }, 5000);
+            }
+            
+            updateDisplay() {
+                if (this.currentRingIndex >= 0 && this.isRunning) {
+                    const currentRing = this.rings[this.currentRingIndex];
+                    const remainingTime = currentRing.totalTime - this.currentTime;
+                    const minutes = Math.floor(remainingTime / 60);
+                    const seconds = remainingTime % 60;
+                    this.timeDisplay.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                } else {
+                    const minutes = Math.floor(this.totalTime / 60);
+                    const seconds = this.totalTime % 60;
+                    this.timeDisplay.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                }
+                
+                this.sessionCountDisplay.textContent = this.sessionCount;
+            }
+            
+            updateProgress() {
+                if (this.currentRingIndex >= 0) {
+                    const currentRing = this.rings[this.currentRingIndex];
+                    const progress = this.currentTime / currentRing.totalTime;
+                    const offset = currentRing.circumference - (progress * currentRing.circumference);
+                    currentRing.element.style.strokeDashoffset = offset;
+                }
+            }
+            
+            updateButtonStates() {
+                if (this.isRunning && this.currentRingIndex >= 0) {
+                    this.extendBtn.disabled = false;
+                } else {
+                    this.extendBtn.disabled = true;
+                }
+            }
+        }
+        
+        // Initialize the widget when the page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            new PomodoroWidget();
+        });
+    </script>
+</body>
+</html>

@@ -46,6 +46,7 @@ class PomodoroTimer {
         this.focusPromptModal = document.getElementById('focusPromptModal');
         this.focusTaskInput = document.getElementById('focusTask');
         this.startFocusBtn = document.getElementById('startFocus');
+        this.closeFocusModal = document.getElementById('closeFocusModal');
         this.ringContainer = document.getElementById('ringContainer');
         this.timerContainer = document.querySelector('.timer-container');
     }
@@ -59,11 +60,18 @@ class PomodoroTimer {
         this.closeModal.addEventListener('click', () => this.closeSettings());
         this.saveSettingsBtn.addEventListener('click', () => this.saveSettings());
         this.startFocusBtn.addEventListener('click', () => this.startFocusSession());
+        this.closeFocusModal.addEventListener('click', () => this.closeFocusPrompt());
         
         // Close modal when clicking outside
         this.settingsModal.addEventListener('click', (e) => {
             if (e.target === this.settingsModal) {
                 this.closeSettings();
+            }
+        });
+        
+        this.focusPromptModal.addEventListener('click', (e) => {
+            if (e.target === this.focusPromptModal) {
+                this.closeFocusPrompt();
             }
         });
         
@@ -74,7 +82,11 @@ class PomodoroTimer {
                 this.toggleTimer();
             }
             if (e.code === 'Escape') {
-                this.closeSettings();
+                if (this.focusPromptModal.classList.contains('modal-show')) {
+                    this.closeFocusPrompt();
+                } else {
+                    this.closeSettings();
+                }
             }
             if (e.code === 'Enter' && this.focusPromptModal.classList.contains('modal-show')) {
                 e.preventDefault();
@@ -360,6 +372,13 @@ class PomodoroTimer {
     showFocusPrompt() {
         this.focusPromptModal.classList.add('modal-show');
         this.focusTaskInput.focus();
+    }
+    
+    closeFocusPrompt() {
+        this.focusPromptModal.classList.remove('modal-show');
+        // Reset the input styling if it was changed
+        this.focusTaskInput.style.borderColor = '';
+        this.focusTaskInput.placeholder = "e.g., Write blog post, Study chapter 3, Code new feature...";
     }
     
     startFocusSession() {
